@@ -15,6 +15,11 @@ from args import arg_parser
 from adaptive_inference import dynamic_evaluate
 import models
 from op_counter import measure_model
+from deep_learning_power_measure.power_measure import experiment, parsers
+
+
+driver = parsers.JsonParser("output_folder")
+exp = experiment.Experiment(driver)
 
 args = arg_parser.parse_args()
 
@@ -63,7 +68,6 @@ def main():
     torch.save(n_flops, os.path.join(args.save, 'flops.pth'))
     del(model)
         
-        
     model = getattr(models, args.arch)(args)
 
     if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
@@ -103,6 +107,9 @@ def main():
     scores = ['epoch\tlr\ttrain_loss\tval_loss\ttrain_prec1'
               '\tval_prec1\ttrain_prec5\tval_prec5']
 
+    ## START EXPERIMENT
+    p, q = exp.measure_yourself(period=2) # measure consumption every 2 seconds
+
     for epoch in range(args.start_epoch, args.epochs):
 
         train_loss, train_prec1, train_prec5, lr = train(train_loader, model, criterion, optimizer, epoch)
@@ -127,6 +134,14 @@ def main():
             'best_prec1': best_prec1,
             'optimizer': optimizer.state_dict(),
         }, args, is_best, model_filename, scores)
+
+    q.put(experiment.STOP_MESSAGE)
+    ## END EXPERIMENT
+
+    ### EXPERIMENT RESULTS
+    driver = parsers.JsonParser(args.output_folder)
+    exp_result = experiment.ExpResults(driver)
+    exp_result.print()
 
     print('Best val_prec1: {:.4f} at epoch {}'.format(best_prec1, best_epoch))
 

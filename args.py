@@ -88,3 +88,10 @@ optim_group.add_argument('--momentum', default=0.9, type=float, metavar='M',
                          help='momentum (default=0.9)')
 optim_group.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                          metavar='W', help='weight decay (default: 1e-4)')
+
+#experiement related
+exp_group = arg_parser.add_argument_group('experiments',
+                                            'experiments setting')
+exp_group.add_argument('--output_folder',
+                    help='directory to save the energy consumption records',
+                    default='measure_power', type=str)
