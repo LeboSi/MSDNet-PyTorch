@@ -62,7 +62,7 @@ def main():
     else:
         IM_SIZE = 224
     
-    flops = torch.load(args.flops_path)  
+    flops = torch.load(args.flops)  
 
     checkpoints = torch.load(args.checkpoints)
 
