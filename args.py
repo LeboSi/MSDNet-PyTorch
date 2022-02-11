@@ -71,3 +71,6 @@ exp_group = arg_parser.add_argument_group('experiments',
 exp_group.add_argument('--output_folder',
                     help='directory to save the energy consumption records',
                     default='measure_power', type=str)
+exp_group.add_argument('--flops_path',
+                    help='path to file containing flops per block',
+                    default='save/flops.pth', type=str)
