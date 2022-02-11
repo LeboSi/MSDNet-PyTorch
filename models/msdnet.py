@@ -1,4 +1,5 @@
 import torch.nn as nn
+import numpy as np
 import torch
 import math
 import pdb
@@ -207,6 +208,7 @@ class MSDNet(nn.Module):
         self.nBlocks = args.nBlocks
         self.steps = [args.base]
         self.args = args
+        self.softmax = nn.Softmax(dim=1).cuda()
         
         n_layers_all, n_layer_curr = args.base, 0
         for i in range(1, self.nBlocks):
@@ -332,10 +334,32 @@ class MSDNet(nn.Module):
         )
         return ClassifierModule(conv, nIn, num_classes)
 
-    def forward(self, x):
-        res = []
+    def forward(self, x, T,flops):
+        total_flops = np.zeros(self.nBlocks)
+        res = torch.zeros(x.size(dim=0),self.args.num_classes)
+        remaining_idx = list(range(x.size(dim=0)))
+        idx_torm = []
+        zeros = (res == 0).nonzero()
+        temp = x.clone().detach()
         for i in range(self.nBlocks):
-            x = self.blocks[i](x)
-            res.append(self.classifier[i](x))
-        return res
+            if len(remaining_idx)!=0:
+                temp = self.blocks[i](temp)
+                xclass = self.classifier[i](temp)
+                _t = self.softmax(xclass)
+                max_preds, argmax_preds = _t.max(dim=1, keepdim=False)
+                
+                for k in range(len(max_preds)):
+                    if (max_preds[k].item() >= T[i]):
+                        total_flops[i]+=flops[i]
+                        idx_torm.append(remaining_idx[k])
+                        res[remaining_idx[k]] = xclass[k]
+                    if (i==(self.nBlocks-1) and max_preds[k].item() < T[i].item()):
+                        res[remaining_idx[k]] = xclass[k]
+
+                for element in idx_torm:
+                    for j in range(len(temp)):
+                        temp[j] = torch.cat([temp[j][:remaining_idx.index(element)], temp[j][remaining_idx.index(element)+1:]])   
+                    remaining_idx.remove(element)
+                idx_torm=[]
+        return res, total_flops
 
