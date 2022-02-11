@@ -12,7 +12,6 @@ import shutil
 
 from dataloader import get_dataloaders
 from args import arg_parser
-from adaptive_inference import dynamic_evaluate
 import models
 from op_counter import measure_model
 from deep_learning_power_measure.power_measure import experiment, parsers
