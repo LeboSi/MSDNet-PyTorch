@@ -16,10 +16,6 @@ import models
 from op_counter import measure_model
 from deep_learning_power_measure.power_measure import experiment, parsers
 
-
-driver = parsers.JsonParser("output_folder")
-exp = experiment.Experiment(driver)
-
 args = arg_parser.parse_args()
 
 if args.gpu:
@@ -52,7 +48,6 @@ torch.manual_seed(args.seed)
 def main():
 
     global args
-    best_prec1, best_epoch = 0.0, 0
 
     if not os.path.exists(args.save):
         os.makedirs(args.save)
@@ -61,6 +56,8 @@ def main():
         IM_SIZE = 32
     else:
         IM_SIZE = 224
+
+    
     
     flops = torch.load(args.flops)  
 
@@ -73,38 +70,34 @@ def main():
 
     model.eval()
 
-    train_loader = []
-    val_loader = []
-    test_loader = []
-
     T = torch.tensor([ 0.800e+00,  0.8000e+00,  0.8000e+00,  8.0e-01,  8.0e-01, 0.8e-00, -1.0000e+08])
-
-#    for i in range(512):
-#        args.batch_size=i+1
-#        train_loader[i], val_loader[i], test_loader[i] = get_dataloaders(args)
-    train_loader, val_loader, test_loader = get_dataloaders(args)
+#    T = torch.tensor([ 1.100e+00,  1.1000e+00,  1.1000e+00,  1.1e+00,  1.1e+00, 1.1e+00, -1.0000e+08])
 
 
-    ## START EXPERIMENT
-    p, q = exp.measure_yourself(period=2) # measure consumption every 2 seconds
+    for i in range(0,512,8):
+        args.batch_size=i+1
+        driver = parsers.JsonParser(args.output_folder+str(i+1))
+        exp = experiment.Experiment(driver)
+        train_loader, val_loader, test_loader = get_dataloaders(args)
+        ## START EXPERIMENT
+        p, q = exp.measure_yourself(period=2) # measure consumption every 2 seconds
 
-    with torch.no_grad():
-        for j in range(50):
-            for i, (input,target) in enumerate(test_loader):
-                batch_flops=[]
-                input = input.cuda()
-                input_var = torch.autograd.Variable(input)
-                target_var = torch.autograd.Variable(target)
+        with torch.no_grad():
+            for j in range(50):
+                for i, (input,target) in enumerate(test_loader):
+                    batch_flops=[]
+                    input = input.cuda()
+                    input_var = torch.autograd.Variable(input)
+                    target_var = torch.autograd.Variable(target)
 
-                output, batch_flops = model(input_var, T, flops)     
+                    output, batch_flops = model(input_var, T, flops)     
 
-    q.put(experiment.STOP_MESSAGE)
-    ## END EXPERIMENT
+        q.put(experiment.STOP_MESSAGE)
+        ## END EXPERIMENT
 
-    ### EXPERIMENT RESULTS
-    driver = parsers.JsonParser(args.output_folder)
-    exp_result = experiment.ExpResults(driver)
-    exp_result.print()
+        ### EXPERIMENT RESULTS
+        driver = parsers.JsonParser(args.output_folder)
+        exp_result = experiment.ExpResults(driver)
 
     return 
 

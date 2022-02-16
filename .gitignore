@@ -115,3 +115,7 @@ cifar-100-python/*
 cifar-100-python.*
 
 .DS_Store
+
+
+#outputs power meter
+*.json

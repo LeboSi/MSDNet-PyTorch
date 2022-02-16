@@ -12,7 +12,10 @@ exp_group = arg_parser.add_argument_group('exp', 'experiment setting')
 exp_group.add_argument('--save', default='save/default-{}'.format(time.time()),
                        type=str, metavar='SAVE',
                        help='path to the experiment logging directory'
-                       '(default: save/debug)')            
+                       '(default: save/debug)') 
+exp_group.add_argument('--evalmode', default='anytime',
+                       choices=['anytime', 'dynamic'],
+                       help='which mode to evaluate')           
 exp_group.add_argument('--flops', default='save/flops.pth', type=str)
 exp_group.add_argument('--print-freq', '-p', default=10, type=int,
                        metavar='N', help='print frequency (default: 100)')
@@ -35,7 +38,7 @@ data_group.add_argument('-j', '--workers', default=4, type=int, metavar='N',
 # model arch related
 arch_group = arg_parser.add_argument_group('arch',
                                            'model architecture setting')
-arch_group.add_argument('--arch', '-a', metavar='ARCH', default='resnet',
+arch_group.add_argument('--arch', '-a', metavar='ARCH', default='msdnet',
                         type=str, choices=model_names,
                         help='model architecture: ' +
                         ' | '.join(model_names) +
@@ -60,10 +63,32 @@ arch_group.add_argument('--bottleneck', default=True, type=bool)
 
 
 # training related
+# training related
 optim_group = arg_parser.add_argument_group('optimization',
                                             'optimization setting')
+
+optim_group.add_argument('--epochs', default=300, type=int, metavar='N',
+                         help='number of total epochs to run (default: 164)')
+optim_group.add_argument('--start-epoch', default=0, type=int, metavar='N',
+                         help='manual epoch number (useful on restarts)')
 optim_group.add_argument('-b', '--batch-size', default=64, type=int,
                          metavar='N', help='mini-batch size (default: 64)')
+optim_group.add_argument('--optimizer', default='sgd',
+                         choices=['sgd', 'rmsprop', 'adam'], metavar='N',
+                         help='optimizer (default=sgd)')
+optim_group.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+                         metavar='LR',
+                         help='initial learning rate (default: 0.1)')
+optim_group.add_argument('--lr-type', default='multistep', type=str, metavar='T',
+                        help='learning rate strategy (default: multistep)',
+                        choices=['cosine', 'multistep'])
+optim_group.add_argument('--decay-rate', default=0.1, type=float, metavar='N',
+                         help='decay rate of learning rate (default: 0.1)')
+optim_group.add_argument('--momentum', default=0.9, type=float, metavar='M',
+                         help='momentum (default=0.9)')
+optim_group.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
+                         metavar='W', help='weight decay (default: 1e-4)')
+
 
 #experiement related
 exp_group = arg_parser.add_argument_group('experiments',
